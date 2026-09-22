@@ -14,7 +14,8 @@ import java.util.*;
 @RestController
 public class NexaController {
   private final JdbcTemplate db; private final PasswordEncoder encoder;
-  public NexaController(JdbcTemplate db, PasswordEncoder encoder){this.db=db;this.encoder=encoder;}
+  private final JwtService jwt;
+  public NexaController(JdbcTemplate db, PasswordEncoder encoder, JwtService jwt){this.db=db;this.encoder=encoder;this.jwt=jwt;}
   public record Register(@NotBlank String cedula,@NotBlank String nombreCompleto,@Email String correo,@NotBlank String password,String role,boolean consentimientoDatos){}
   public record Login(@Email String correo,@NotBlank String password){}
   @GetMapping("/health") Map<String,String> health(){return Map.of("status","ok","service","NEXA Spring Boot");}
@@ -29,6 +30,6 @@ public class NexaController {
   @GetMapping("/api/reportes/access-summary") Map<String,Object> accessReport(){return Map.of("type","access-summary","total",count("SELECT count(*) FROM accesos"),"generatedAt",Instant.now());}
   @GetMapping("/api/reportes/incident-summary") Map<String,Object> incidentReport(){return Map.of("type","incident-summary","active",count("SELECT count(*) FROM alertas WHERE estado <> 'cerrada'"),"generatedAt",Instant.now());}
   @PostMapping("/api/auth/register") @ResponseStatus(HttpStatus.CREATED) Map<String,Object> register(@Valid @RequestBody Register input){if(!input.consentimientoDatos())throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,"Se requiere consentimiento informado");String role=input.role()==null?"residente":input.role();UUID roleId=db.queryForObject("SELECT id FROM roles WHERE nombre=?",UUID.class,role);if(roleId==null)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Rol invalido");db.update("INSERT INTO usuarios(cedula,nombre_completo,correo,password_hash,role_id,consentimiento_datos,fecha_consentimiento) VALUES (?,?,?,?,?,true,now())",input.cedula(),input.nombreCompleto(),input.correo(),encoder.encode(input.password()),roleId);return Map.of("status","created","correo",input.correo());}
-  @PostMapping("/api/auth/login") Map<String,Object> login(@Valid @RequestBody Login input){Map<String,Object> user=db.queryForMap("SELECT id,password_hash FROM usuarios WHERE correo=? AND activo=true",input.correo());if(!encoder.matches(input.password(),(String)user.get("password_hash")))throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Credenciales invalidas");return Map.of("access_token",user.get("id").toString(),"token_type","bearer");}
+  @PostMapping("/api/auth/login") Map<String,Object> login(@Valid @RequestBody Login input){Map<String,Object> user=db.queryForMap("SELECT id,password_hash,r.nombre FROM usuarios u JOIN roles r ON r.id=u.role_id WHERE correo=? AND activo=true",input.correo());if(!encoder.matches(input.password(),(String)user.get("password_hash")))throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Credenciales invalidas");return Map.of("access_token",jwt.create(user.get("id").toString(),(String)user.get("nombre")),"token_type","bearer");}
   private long count(String sql){return db.queryForObject(sql,Long.class);}
 }
