@@ -1,0 +1,1 @@
+La matriz principal es nexa_requisitos.csv. nexa_requisitos.xml es SpreadsheetML compatible con Microsoft Excel y puede abrirse directamente en Excel. El CSV contiene los 26 requisitos funcionales completos; ejecutar `python scripts/generar_excel.py` crea `nexa_requisitos.xlsx` con todos los RF y filtros.

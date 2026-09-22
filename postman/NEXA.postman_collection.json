@@ -1,0 +1,15 @@
+{
+  "info": {"name": "NEXA API", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
+  "variable": [{"key": "baseUrl", "value": "http://localhost:8000"}, {"key": "token", "value": ""}, {"key": "userId", "value": "00000000-0000-0000-0000-000000000000"}],
+  "item": [
+    {"name": "Health", "request": {"method": "GET", "url": "{{baseUrl}}/health"}},
+    {"name": "Register", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw", "raw":"{\"cedula\":\"100000001\",\"nombre_completo\":\"Admin NEXA\",\"correo\":\"admin@nexa.co\",\"password\":\"CambioSeguro123!\",\"role\":\"admin\",\"consentimiento_datos\":true}"}, "url": "{{baseUrl}}/api/auth/register"}},
+    {"name": "Login", "event": [{"listen":"test","script":{"exec":["pm.test('login 200', () => pm.response.to.have.status(200));","pm.collectionVariables.set('token', pm.response.json().access_token);"]}}], "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"correo\":\"admin@nexa.co\",\"password\":\"CambioSeguro123!\"}"},"url":"{{baseUrl}}/api/auth/login"}},
+    {"name": "Refresh token", "request": {"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":"{{baseUrl}}/api/auth/refresh"}},
+    {"name": "List users", "request": {"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":"{{baseUrl}}/api/users"}},
+    {"name": "Inactive user cannot access", "event":[{"listen":"test","script":{"exec":["pm.test('inactive rejected', () => pm.expect([403, 404]).to.include(pm.response.code));"]}}],"request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"usuario_id\":\"{{userId}}\",\"tipo_credencial\":\"rfid\",\"punto_acceso\":\"Porteria\",\"resultado\":\"permitido\"}"},"url":"{{baseUrl}}/api/accesos"}},
+    {"name": "Create alert", "request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{token}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"tipo\":\"intrusion\",\"severidad\":\"alta\",\"descripcion\":\"Movimiento fuera de horario\"}"},"url":"{{baseUrl}}/api/alertas"}},
+    {"name": "List cameras", "request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":"{{baseUrl}}/api/cameras"}},
+    {"name": "Access report", "request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":"{{baseUrl}}/api/reportes/access-summary"}}
+  ]
+}
