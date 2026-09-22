@@ -1,15 +1,16 @@
-import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
 import { ApiService } from './api.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, FormsModule],
+  imports: [RouterOutlet, FormsModule, CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   private readonly api = inject(ApiService);
   activeSection = 'Resumen';
   apiStatus = 'Modo demostracion';
@@ -23,28 +24,29 @@ export class AppComponent {
     { label: 'Reportes', icon: '05' },
   ];
 
-  readonly accessEvents = [
-    { person: 'Laura Mendoza', credential: 'RFID · T-2048', point: 'Porteria norte', time: '08:42', status: 'Permitido', initials: 'LM' },
-    { person: 'Carlos Rojas', credential: 'Placa · KLM 482', point: 'Parqueadero', time: '08:37', status: 'Permitido', initials: 'CR' },
-    { person: 'Visitante no identificado', credential: 'Biometria', point: 'Torre 3', time: '08:31', status: 'Denegado', initials: 'VN' },
-    { person: 'Diana Salcedo', credential: 'RFID · T-1980', point: 'Porteria sur', time: '08:16', status: 'Permitido', initials: 'DS' },
-  ];
+  accessEvents: any[] = [];
+  alerts: any[] = [];
+  cameras: any[] = [];
+  metrics = { accessesToday: 0, activeAlerts: 0, onlineCameras: 0, registeredPeople: 0 };
 
-  readonly alerts = [
-    { title: 'Acceso denegado repetido', detail: 'Torre 3 · hace 11 min', level: 'critica' },
-    { title: 'Camara sin señal', detail: 'Parqueadero · hace 24 min', level: 'media' },
-    { title: 'Movimiento fuera de horario', detail: 'Zona social · hace 1 h', level: 'baja' },
-  ];
-
-  readonly cameras = [
-    { name: 'Porteria norte', location: 'Entrada principal', state: 'En linea', tone: 'live' },
-    { name: 'Parqueadero', location: 'Nivel -1', state: 'En linea', tone: 'live' },
-    { name: 'Zona social', location: 'Bloque comun', state: 'Revisar', tone: 'warning' },
-  ];
+  ngOnInit(): void { this.reload(); }
+  reload(): void {
+    this.api.dashboard().subscribe({ next: data => { this.metrics = data; this.apiStatus = 'API conectada'; }, error: () => this.apiStatus = 'Backend no disponible' });
+    this.api.accesses().subscribe({ next: data => this.accessEvents = data, error: () => this.accessEvents = [] });
+    this.api.alerts().subscribe({ next: data => this.alerts = data, error: () => this.alerts = [] });
+    this.api.cameras().subscribe({ next: data => this.cameras = data, error: () => this.cameras = [] });
+  }
 
   setSection(section: string): void {
     this.activeSection = section;
+    if (section === 'Accesos') this.api.accesses().subscribe(data => this.accessEvents = data);
+    if (section === 'Alertas') this.api.alerts().subscribe(data => this.alerts = data);
+    if (section === 'Videovigilancia') this.api.cameras().subscribe(data => this.cameras = data);
   }
+
+  createReport(): void { this.api.accessReport().subscribe({ next: () => this.apiStatus = 'Reporte generado', error: () => this.apiStatus = 'Error al generar reporte' }); }
+  closeAlert(id: string): void { this.api.closeAlert(id).subscribe({ next: () => this.reload() }); }
+  openCamera(id: string): void { this.api.cameraStream(id).subscribe({ next: () => this.apiStatus = 'Stream autorizado', error: () => this.apiStatus = 'Camara no disponible' }); }
 
   checkApi(): void {
     this.api.health().subscribe({
@@ -56,6 +58,6 @@ export class AppComponent {
   get filteredEvents() {
     const query = this.searchTerm.trim().toLowerCase();
     if (!query) return this.accessEvents;
-    return this.accessEvents.filter((event) => `${event.person} ${event.point} ${event.credential}`.toLowerCase().includes(query));
+    return this.accessEvents.filter((event) => `${event.usuario} ${event.point} ${event.credential}`.toLowerCase().includes(query));
   }
 }

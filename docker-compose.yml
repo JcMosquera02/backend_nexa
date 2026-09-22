@@ -1,15 +1,20 @@
 services:
   api:
-    build: .
+    build: ./backend-java
     env_file: .env
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: nexa
+      PGUSER: nexa
+      PGPASSWORD: nexa
+      CORS_ORIGIN: http://localhost:4200
     ports:
-      - "8000:8000"
+      - "8080:8080"
     depends_on:
       - db
       - redis
       - minio
-    volumes:
-      - .:/app
   db:
     image: postgres:16-alpine
     environment:

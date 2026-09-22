@@ -1,6 +1,6 @@
 {
   "info": {"name": "NEXA API", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
-  "variable": [{"key": "baseUrl", "value": "http://localhost:8000"}, {"key": "token", "value": ""}, {"key": "userId", "value": "00000000-0000-0000-0000-000000000000"}],
+  "variable": [{"key": "baseUrl", "value": "http://localhost:8080"}, {"key": "token", "value": ""}, {"key": "userId", "value": "00000000-0000-0000-0000-000000000000"}],
   "item": [
     {"name": "Health", "request": {"method": "GET", "url": "{{baseUrl}}/health"}},
     {"name": "Register", "request": {"method": "POST", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw", "raw":"{\"cedula\":\"100000001\",\"nombre_completo\":\"Admin NEXA\",\"correo\":\"admin@nexa.co\",\"password\":\"CambioSeguro123!\",\"role\":\"admin\",\"consentimiento_datos\":true}"}, "url": "{{baseUrl}}/api/auth/register"}},

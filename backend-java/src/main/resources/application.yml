@@ -1,0 +1,14 @@
+server:
+  port: ${PORT:8080}
+spring:
+  datasource:
+    url: ${JDBC_DATABASE_URL:jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:nexa}}
+    username: ${PGUSER:nexa}
+    password: ${PGPASSWORD:nexa}
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: never
+nexa:
+  jwt-secret: ${JWT_SECRET:change-this-secret-to-at-least-32-characters}
+  cors-origin: ${CORS_ORIGIN:http://localhost:4200}
