@@ -1,8 +1,8 @@
-# Documento maestro para generar NEXA
+# NEXA: documento maestro de generacion y estado
 
 ## 1. Proposito
 
-Este documento describe como reconstruir NEXA hasta el estado actual del repositorio. NEXA es una plataforma para conjuntos residenciales de Colombia con:
+Este documento describe como reconstruir NEXA y cual es su estado real en el repositorio. NEXA es una plataforma para conjuntos residenciales de Colombia con:
 
 - Gestion de usuarios y roles.
 - Control de accesos.
@@ -29,10 +29,10 @@ Repositorio remoto:
 https://github.com/JcMosquera02/backend_nexa.git
 ```
 
-Ultimo commit publicado al momento de crear este documento:
+Ultimo commit publicado:
 
 ```text
-2a6e716 fix: issue signed JWTs from Spring login
+5223c4a fix: repair Spring Boot dependency configuration
 ```
 
 Rama principal publicada:
@@ -47,14 +47,14 @@ Rama local de trabajo observada:
 appmod/java-upgrade-20260922140124
 ```
 
-Importante: antes de continuar el desarrollo hay que revisar el estado local de `backend-java/pom.xml`, porque tiene modificaciones locales posteriores al ultimo commit. No se deben sobrescribir sin revisar el diff.
+El `backend-java/pom.xml` ya fue reparado: ahora es un POM unico, valido y compilable. Antes de sobrescribir cambios de trabajo, siempre se debe revisar `git status` y `git diff`.
 
 Validaciones conocidas del estado anterior:
 
 - Angular production build: correcto.
 - Pruebas Angular: 2 SUCCESS.
 - Pruebas Python existentes: 2 passed.
-- Spring Boot fue empaquetado con Maven 3.9.15 en la iteracion anterior.
+- Spring Boot fue empaquetado correctamente con Maven 3.9.15.
 - Docker no se pudo validar en el equipo porque Docker no estaba instalado.
 
 ## 3. Estructura del proyecto
@@ -439,19 +439,18 @@ Cambiar la variable `baseUrl` a:
 http://localhost:8080
 ```
 
-Casos principales:
+Casos principales definidos o previstos:
 
 - Health.
 - Register.
 - Login.
-- Refresh heredado si se conserva el contrato anterior.
-- Listado de usuarios heredado si se conserva el backend Python.
+- Refresh y listado de usuarios pertenecen al backend Python legado; no forman parte del controlador Spring actual.
 - Accesos.
 - Alertas.
 - Camaras.
 - Reportes.
 
-La coleccion debe actualizarse para incluir tambien `dashboard/summary`, cierre de alertas y stream de camara del backend Spring.
+La coleccion debe mantenerse alineada con Spring e incluir `dashboard/summary`, cierre de alertas y stream de camara.
 
 ## 12. Pruebas
 
@@ -528,10 +527,10 @@ Nunca incluir:
 
 ## 15. Seguridad y cumplimiento
 
-Implementado o modelado:
+Implementado en el codigo actual:
 
 - Hash de contrasenas con BCrypt.
-- JWT para autenticacion.
+- Emision de JWT firmado durante el login.
 - Consentimiento de datos.
 - Roles de usuario.
 - Restriccion de usuario inactivo.
@@ -541,9 +540,11 @@ Implementado o modelado:
 - Variables secretas fuera del repositorio.
 - Retencion configurable de videos.
 
-Pendiente para produccion:
+Limitaciones actuales y pendientes para produccion:
 
-- Middleware JWT completo en todos los endpoints de escritura Spring.
+- Aplicar el filtro JWT y autorizacion por rol a todos los endpoints de escritura Spring. Actualmente `SecurityConfig` permite `/api/**` para facilitar el desarrollo local.
+- Validar payloads de accesos y alertas con DTOs tipados y reglas de negocio, en lugar de `Map<String,Object>`.
+- Sustituir la concatenacion del UUID en la consulta de creacion de accesos por parametros JDBC tipados.
 - Auditoria automatica desde Spring para cada mutacion.
 - Migrar todos los reportes a una tabla `reportes` y almacenamiento MinIO/S3.
 - WebSockets o Redis Pub/Sub para alertas en tiempo real.
@@ -584,13 +585,13 @@ Construye NEXA, plataforma colombiana de seguridad residencial, hasta el siguien
 21. Documenta lo que quede pendiente en produccion y no afirmes que una funcionalidad existe si solo esta simulada.
 ``` 
 
-## 17. Checklist de entrega al 100 por ciento
+## 17. Checklist de entrega
 
-- [ ] Revisar y limpiar `backend-java/pom.xml` si tiene cambios locales.
-- [ ] Confirmar que Maven empaqueta sin errores.
+- [x] Revisar y reparar `backend-java/pom.xml`.
+- [x] Confirmar que Maven empaqueta sin errores.
 - [ ] Ejecutar `database/schema.sql` en la base objetivo.
 - [ ] Configurar secretos en Railway.
-- [ ] Ejecutar Spring Boot y verificar `/health`.
+- [ ] Ejecutar Spring Boot con PostgreSQL real y verificar `/health`.
 - [ ] Ejecutar Angular y verificar que las metricas dejan de estar en cero.
 - [ ] Registrar un usuario con consentimiento.
 - [ ] Iniciar sesion y guardar JWT.
@@ -598,8 +599,9 @@ Construye NEXA, plataforma colombiana de seguridad residencial, hasta el siguien
 - [ ] Cerrar una alerta desde la interfaz.
 - [ ] Generar un reporte desde la interfaz.
 - [ ] Probar acceso denegado para usuario inactivo.
-- [ ] Ejecutar tests Angular y Python.
-- [ ] Ejecutar build Maven y Angular.
+- [x] Ejecutar tests Angular.
+- [x] Ejecutar tests Python heredados.
+- [x] Ejecutar build Maven y Angular.
 - [ ] Revisar secretos con una busqueda antes de `git push`.
-- [ ] Publicar `main` en GitHub.
+- [x] Publicar `main` en GitHub.
 - [ ] Configurar dominio y HTTPS en produccion.
